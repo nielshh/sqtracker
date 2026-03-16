@@ -56,15 +56,15 @@ export const TorrentFields = ({
   const { getLocaleString } = useContext(LocaleContext);
 
   useEffect(() => {
-    setSources(
-      category
-        ? categories[
-            Object.keys(categories).find(
-              (cat) => slugify(cat, { lower: true }) === category
-            )
-          ]
-        : []
-    );
+      setSources(
+        category
+          ? categories[
+              Object.keys(categories || {}).find(
+                (cat) => slugify(cat, { lower: true }) === category
+              )
+            ] || []
+          : []
+      );
   }, [category]);
 
   return (

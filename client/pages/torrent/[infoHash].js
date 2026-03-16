@@ -509,7 +509,7 @@ const Torrent = ({ token, torrent = {}, userId, userRole, uid, userStats }) => {
     (c) => slugify(c, { lower: true }) === torrent.type
   );
 
-  const source = SQ_TORRENT_CATEGORIES[category].find(
+  const source = SQ_TORRENT_CATEGORIES[category]?.find(
     (s) => slugify(s, { lower: true }) === torrent.source
   );
 
