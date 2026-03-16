@@ -72,9 +72,7 @@ validateConfig(config).then(() => {
     mongoose
       .connect(process.env.SQ_MONGO_URL, {
         useNewUrlParser: true,
-        useFindAndModify: false,
         useUnifiedTopology: true,
-        useCreateIndex: true,
       })
       .catch((e) => {
         console.error(`[sq] error on initial db connection: ${e.message}`);

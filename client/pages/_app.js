@@ -8,7 +8,8 @@ import styled, {
   createGlobalStyle,
   keyframes,
 } from "styled-components";
-import { useCookies } from "react-cookie";
+import { useCookies, CookiesProvider } from "react-cookie";
+import Cookies from "universal-cookie";
 import prettyBytes from "pretty-bytes";
 import { Menu } from "@styled-icons/boxicons-regular/Menu";
 import { Sun } from "@styled-icons/boxicons-regular/Sun";
@@ -442,10 +443,21 @@ const SqTracker = ({ Component, pageProps, initialTheme }) => {
   );
 };
 
-SqTracker.getInitialProps = async (appContext) => {
-  const { theme } = appContext?.ctx?.req?.cookies || {};
-  const appInitialProps = App.getInitialProps(appContext);
-  return { initialTheme: theme, ...appInitialProps };
+const AppWrapper = (props) => {
+  const isServer = typeof window === "undefined";
+  const cookies = isServer ? new Cookies(props.initialCookies) : undefined;
+  return (
+    <CookiesProvider cookies={cookies}>
+      <SqTracker {...props} />
+    </CookiesProvider>
+  );
 };
 
-export default SqTracker;
+AppWrapper.getInitialProps = async (appContext) => {
+  const { theme } = appContext?.ctx?.req?.cookies || {};
+  const initialCookies = appContext?.ctx?.req?.headers?.cookie || "";
+  const appInitialProps = App.getInitialProps ? await App.getInitialProps(appContext) : {};
+  return { ...appInitialProps, initialTheme: theme, initialCookies };
+};
+
+export default AppWrapper;

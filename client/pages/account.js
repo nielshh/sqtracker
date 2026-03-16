@@ -370,10 +370,11 @@ const Account = ({ token, invites = [], user, userRole }) => {
       }
 
       const { passkey: newPasskey } = await resetRes.json();
+      const isNew = !passkey;
       setPasskey(newPasskey);
-      addNotification("success", "API Key reset successfully");
+      addNotification("success", isNew ? "API Key generated successfully" : "API Key reset successfully");
     } catch (e) {
-      addNotification("error", `Could not reset API Key: ${e.message}`);
+      addNotification("error", `Could not update API Key: ${e.message}`);
       console.error(e);
     }
     setLoading(false);
@@ -671,8 +672,8 @@ const Account = ({ token, invites = [], user, userRole }) => {
           >
             Copy
           </Button>
-          <Button type="button" ml={3} variant="danger" onClick={handleResetPasskey}>
-            Reset
+          <Button type="button" ml={3} variant={passkey ? "danger" : "primary"} onClick={handleResetPasskey}>
+            {passkey ? "Reset" : "Generate"}
           </Button>
         </Box>
       </Box>

@@ -19,16 +19,6 @@ const nextConfig = {
     ...config.envs,
     ...config.secrets,
   },
-  sentry: {
-    hideSourceMaps: true,
-  },
 };
 
-const sentryWebpackPluginOptions = {
-  silent: true,
-  errorHandler: (err, invokeErr, compilation) => {
-    compilation.warnings.push("Sentry CLI Plugin: " + err.message);
-  },
-};
-
-module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
+module.exports = nextConfig;
