@@ -24,6 +24,7 @@ import {
   requestRoutes,
   groupRoutes,
   wikiRoutes,
+  apiRoutes,
 } from "./routes";
 import {
   register,
@@ -181,6 +182,7 @@ validateConfig(config).then(() => {
   app.use("/requests", requestRoutes());
   app.use("/group", groupRoutes());
   app.use("/wiki", wikiRoutes());
+  app.use("/api", apiRoutes(tracker));
 
   app.use((err, req, res, next) => {
     console.error(`[sq] error in ${req.url}:`, err);

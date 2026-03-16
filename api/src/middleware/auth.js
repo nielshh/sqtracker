@@ -2,6 +2,27 @@ import jwt from "jsonwebtoken";
 import User from "../schema/user";
 
 const auth = async (req, res, next) => {
+  const apiKey = req.query.apikey || req.query.passkey;
+
+  if (apiKey) {
+    try {
+      const user = await User.findOne({ passkey: apiKey });
+      if (user) {
+        if (user.banned) {
+          res.status(403).send("User is banned");
+          return;
+        }
+        req.userId = user._id;
+        req.userRole = user.role;
+        return next();
+      } else {
+        return res.status(401).send("Invalid API key");
+      }
+    } catch (err) {
+      return res.status(500).send(err.message);
+    }
+  }
+
   if (req.headers.authorization) {
     const token = req.headers.authorization.replace("Bearer ", "");
     try {

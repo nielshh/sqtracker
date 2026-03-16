@@ -82,6 +82,7 @@ const Account = ({ token, invites = [], user, userRole }) => {
   const [totpQrData, setTotpQrData] = useState();
   const [totpBackupCodes, setTotpBackupCodes] = useState();
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [passkey, setPasskey] = useState(user.passkey || "");
 
   const { addNotification } = useContext(NotificationContext);
   const { setLoading } = useContext(LoadingContext);
@@ -352,6 +353,32 @@ const Account = ({ token, invites = [], user, userRole }) => {
     }
   };
 
+  const handleResetPasskey = async () => {
+    setLoading(true);
+    try {
+      const resetRes = await fetch(`${SQ_API_URL}/account/passkey/reset`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (resetRes.status !== 200) {
+        const reason = await resetRes.text();
+        throw new Error(reason);
+      }
+
+      const { passkey: newPasskey } = await resetRes.json();
+      setPasskey(newPasskey);
+      addNotification("success", "API Key reset successfully");
+    } catch (e) {
+      addNotification("error", `Could not reset API Key: ${e.message}`);
+      console.error(e);
+    }
+    setLoading(false);
+  };
+
   return (
     <>
       <SEO title={getLocaleString("accMyAccount")} />
@@ -617,6 +644,37 @@ const Account = ({ token, invites = [], user, userRole }) => {
             </>
           )}
         </form>
+      </Box>
+      <Box mb={5}>
+        <Text as="h2" mb={4}>
+          API Key / Passkey
+        </Text>
+        <Text mb={4}>
+          Your API Key allows you to use external indexers such as Torznab, Sonarr, and Radarr.
+        </Text>
+        <Box display="flex" alignItems="center">
+          <Input 
+            value={passkey} 
+            readOnly 
+            width="300px" 
+            mb={0} 
+            fontFamily="mono" 
+          />
+          <Button 
+            type="button"
+            ml={4} 
+            variant="secondary"
+            onClick={() => {
+              copy(passkey);
+              addNotification("success", "API Key copied to clipboard");
+            }}
+          >
+            Copy
+          </Button>
+          <Button type="button" ml={3} variant="danger" onClick={handleResetPasskey}>
+            Reset
+          </Button>
+        </Box>
       </Box>
       <Box mb={5}>
         <Text as="h2" mb={4}>

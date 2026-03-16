@@ -1,4 +1,11 @@
-# ■ sqtracker
+# ■ sqtracker (Fork)
+
+> **Note:** This is a modified fork of the original [tdjsnelling/sqtracker](https://github.com/tdjsnelling/sqtracker).
+> 
+> **Custom modifications:**
+> - Added Torznab API endpoint (`/api`) providing support for external indexers such as Sonarr and Radarr.
+> - Added User `Passkey` / `API Key` generation, authentication, and a display/reset mechanism on the account page.
+> - **Security Upgrades:** Audited and patched critical and high NPM security vulnerabilities across both the `/api` and `/client` package dependencies (Upgraded Next.js, React, Mongoose, Express, etc).
 
 ![Latest stable release](https://badgen.net/github/release/tdjsnelling/sqtracker/stable)
 [![License GPLv3](https://badgen.net/badge/license/GPLv3/blue)](./LICENSE)

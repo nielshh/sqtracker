@@ -11,6 +11,16 @@ import { getUserRatio } from "../utils/ratio";
 import { getUserHitNRuns } from "../utils/hitnrun";
 import { BYTES_GB } from "../tracker/announce";
 
+export const resetPasskey = async (req, res, next) => {
+  try {
+    const passkey = crypto.randomBytes(32).toString("hex");
+    await User.findOneAndUpdate({ _id: req.userId }, { $set: { passkey } });
+    res.json({ passkey });
+  } catch (e) {
+    next(e);
+  }
+};
+
 export const sendVerificationEmail = async (mail, address, token) => {
   await mail.sendMail({
     from: `"${process.env.SQ_SITE_NAME}" <${process.env.SQ_MAIL_FROM_ADDRESS}>`,
@@ -122,6 +132,7 @@ export const register = (mail) => async (req, res, next) => {
           .update(newUser._id.toString())
           .digest("hex")
           .slice(0, 10);
+        newUser.passkey = crypto.randomBytes(32).toString("hex");
 
         const createdUser = await newUser.save();
 
@@ -488,6 +499,7 @@ export const fetchUser = (tracker) => async (req, res, next) => {
           banned: 1,
           bonusPoints: 1,
           "totp.enabled": 1,
+          passkey: 1,
         },
       },
       {
@@ -687,6 +699,13 @@ export const fetchUser = (tracker) => async (req, res, next) => {
     if (!user) {
       res.status(404).send("User does not exist");
       return;
+    }
+
+    if (
+      user._id.toString() !== req.userId.toString() &&
+      req.userRole !== "admin"
+    ) {
+      delete user.passkey;
     }
 
     const { ratio } = await getUserRatio(user._id);

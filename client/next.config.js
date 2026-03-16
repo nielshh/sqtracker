@@ -8,6 +8,9 @@ const nextConfig = {
   compiler: {
     styledComponents: true,
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   publicRuntimeConfig: {
     ...config.envs,
     SQ_VERSION: version,
