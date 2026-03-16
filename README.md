@@ -5,6 +5,7 @@
 > **Custom modifications:**
 > - **Torznab API Integration**: Full support for external indexers like Sonarr and Radarr via the `/api` endpoint, featuring optimized routing and automated rate-limit bypass.
 > - **Smart API Key Management**: Context-aware "Generate/Reset" passkey mechanism on the account page.
+> - **Performance & Logic Fixes**: Optimized torrent browsing with stable secondary sorting and corrected pagination math to ensure distinct, reliable results across large libraries.
 > - **SSR Robustness**: Patched critical React Context crashes during Server-Side Rendering (SSR) with a global `CookiesProvider` and `universal-cookie` integration.
 > - **Security & Performance Overhaul**: Upgraded core stack (Node.js 18, React 18, Next.js 13.5, Mongoose 6) and audited all NPM dependencies to patch high-risk vulnerabilities.
 > - **Privacy-First UI**: Removed "Powered by" branding and language selectors for a cleaner, professional look.

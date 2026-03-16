@@ -480,6 +480,7 @@ export const getTorrentsPage = async ({
   if (sortField) combinedSort[sortField] = sortDir;
   if (query) combinedSort.confidenceScore = { $meta: "textScore" };
   if (!combinedSort.created) combinedSort.created = -1;
+  combinedSort._id = -1;
 
   const torrents = await Torrent.aggregate([
     ...(query
@@ -706,9 +707,11 @@ export const listAll = async (req, res, next) => {
 
 export const searchTorrents = (tracker) => async (req, res, next) => {
   const { query, category, source, tag, page, sort } = req.query;
+  const limit = 25;
   try {
     const torrents = await getTorrentsPage({
-      skip: page ? parseInt(page) : 0,
+      skip: page ? (parseInt(page) - 1) * limit : 0,
+      limit,
       query: query ? decodeURIComponent(query) : undefined,
       category,
       source,
