@@ -285,38 +285,6 @@ const Navigation = ({ isMobile, menuIsOpen, setMenuIsOpen }) => {
           )}
         </Box>
       )}
-      <Box
-        as="footer"
-        position="absolute"
-        bottom={0}
-        left={0}
-        right={0}
-        borderTop="1px solid"
-        borderColor="border"
-        p={3}
-      >
-        <Text color="grey" fontSize={0}>
-          {getLocaleString("poweredBy")}{" "}
-          <a
-            href="https://github.com/tdjsnelling/sqtracker"
-            target="_blank"
-            rel="noreferrer"
-          >
-            ■ sqtracker
-          </a>{" "}
-          v{SQ_VERSION}
-        </Text>
-        <LocaleSelector
-          value={locale}
-          onChange={(e) => setLocale(e.target.value)}
-        >
-          {locales.sort().map((l) => (
-            <option key={`locale-${l}`} value={l}>
-              {l.toUpperCase()}
-            </option>
-          ))}
-        </LocaleSelector>
-      </Box>
     </Box>
   );
 };

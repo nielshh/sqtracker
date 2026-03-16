@@ -6,7 +6,6 @@ http:
         - web
       rule: "Host(`example.com`) && PathPrefix(`/api`, `/sq`)"
       middlewares:
-        - api-prefix
         - apiHostHeaderSet
       tls:
         certResolver: tlsresolver

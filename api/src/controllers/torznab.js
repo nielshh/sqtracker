@@ -25,6 +25,7 @@ const getTorrentXml = (torrent, userId) => {
   return `<item>
       <title>${torrent.name}</title>
       <description><![CDATA[${torrent.description || ''}]]></description>
+      <pubDate>${new Date(torrent.created).toUTCString()}</pubDate>
       <guid isPermaLink="true">${process.env.SQ_BASE_URL}/torrent/download/${torrent.infoHash}/${userId}</guid>
       <link>${process.env.SQ_BASE_URL}/torrent/download/${torrent.infoHash}/${userId}</link>
       <enclosure url="${process.env.SQ_API_URL}/torrent/download/${torrent.infoHash}/${userId}" type="application/x-bittorrent" length="${torrent.size || 0}" />
@@ -72,6 +73,10 @@ export const handleTorznabRequest = (tracker) => async (req, res, next) => {
       }
 
       const user = await User.findOne({ _id: req.userId });
+
+      if (!user) {
+        return res.status(401).send("User not found mapping Torznab request");
+      }
 
       const torrentsXml = torrentsWithScrape
         .map((to) => getTorrentXml(to, user.uid))

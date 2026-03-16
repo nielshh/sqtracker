@@ -133,6 +133,7 @@ validateConfig(config).then(() => {
       return req.ip;
     },
     skip: (req) => {
+      if (req.path.startsWith('/sq/') || req.path.startsWith('/api') || req.path.startsWith('/rss')) return true;
       return process.env.NODE_ENV !== "production" || req.method === "OPTIONS";
     },
   });
@@ -150,7 +151,8 @@ validateConfig(config).then(() => {
   app.use(bodyParser.json({ limit: "5mb" }));
   app.use(cookieParser());
 
-  app.get("/", (req, res) => {
+  app.get("/", (req, res, next) => {
+    if (req.query.t) return auth(req, res, () => apiRoutes(tracker)(req, res, next));
     res.setHeader("Content-Type", "text/plain");
     res.send(`■ sqtracker running: ${process.env.SQ_SITE_NAME}`).status(200);
   });
