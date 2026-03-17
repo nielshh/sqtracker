@@ -270,56 +270,72 @@ export const login = async (req, res, next) => {
 };
 
 export const generateInvite = (mail) => async (req, res, next) => {
-  if (process.env.SQ_ALLOW_REGISTER !== "invite" && req.userRole !== "admin") {
-    res
-      .status(403)
-      .send("Can only send invites when tracker is in invite only mode");
-    return;
-  }
-
-  if (req.body.email && req.body.role) {
-    const user = await User.findOne({ _id: req.userId }).lean();
-
-    if (user.remainingInvites < 1) {
-      res.status(403).send("You do not have any remaining invites");
+  try {
+    if (
+      process.env.SQ_ALLOW_REGISTER !== "invite" &&
+      req.userRole !== "admin"
+    ) {
+      res
+        .status(403)
+        .send("Can only send invites when tracker is in invite only mode");
+      return;
     }
 
-    const created = Date.now();
-    const validUntil = created + 48 * 60 * 60 * 1000;
+    if (req.body.email && req.body.role) {
+      const user = await User.findOne({ _id: req.userId }).lean();
 
-    const { email, role } = req.body;
+      if (user.remainingInvites < 1) {
+        res.status(403).send("You do not have any remaining invites");
+        return;
+      }
 
-    const invite = new Invite({
-      invitingUser: req.userId,
-      created,
-      validUntil,
-      claimed: false,
-      email,
-      role: role || "user",
-    });
+      const created = Date.now();
+      const validUntil = created + 48 * 60 * 60 * 1000;
 
-    invite.token = jwt.sign(
-      { id: invite._id, validUntil },
-      process.env.SQ_JWT_SECRET
-    );
+      const { email, role } = req.body;
 
-    const createdInvite = await invite.save();
+      const invite = new Invite({
+        invitingUser: req.userId,
+        created,
+        validUntil,
+        claimed: false,
+        email,
+        role: role || "user",
+      });
 
-    if (createdInvite) {
-      if (!process.env.SQ_DISABLE_EMAIL) {
-        await mail.sendMail({
-          from: `"${process.env.SQ_SITE_NAME}" <${process.env.SQ_MAIL_FROM_ADDRESS}>`,
-          to: email,
-          subject: "Invite",
-          text: `You have been invited to join ${process.env.SQ_SITE_NAME}. Please follow the link below to register.
+      invite.token = jwt.sign(
+        { id: invite._id, validUntil },
+        process.env.SQ_JWT_SECRET
+      );
+
+      const createdInvite = await invite.save();
+
+      if (createdInvite) {
+        if (!process.env.SQ_DISABLE_EMAIL) {
+          try {
+            await mail.sendMail({
+              from: `"${process.env.SQ_SITE_NAME}" <${process.env.SQ_MAIL_FROM_ADDRESS}>`,
+              to: email,
+              subject: "Invite",
+              text: `You have been invited to join ${process.env.SQ_SITE_NAME}. Please follow the link below to register.
         
 ${process.env.SQ_BASE_URL}/register?token=${createdInvite.token}`,
-        });
+            });
+          } catch (mailError) {
+            console.error("[sq] Error sending invite email:", mailError);
+            return res.status(200).send({
+              ...createdInvite.toJSON(),
+              emailError: mailError.message,
+            });
+          }
+        }
+        res.send(createdInvite);
       }
-      res.send(createdInvite);
+    } else {
+      res.status(400).send("Request must include email, role");
     }
-  } else {
-    res.status(400).send("Request must include email, role");
+  } catch (e) {
+    next(e);
   }
 };
 

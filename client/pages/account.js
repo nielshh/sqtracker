@@ -135,14 +135,21 @@ const Account = ({ token, invites = [], user, userRole }) => {
         return currentInvitesList;
       });
 
-      addNotification(
-        "success",
-        `${getLocaleString(
-          SQ_DISABLE_EMAIL
-            ? "accInviteSentSuccessNoEmail"
-            : "accInviteSentSuccess"
-        )}`
-      );
+      if (invite.emailError) {
+        addNotification(
+          "warning",
+          `Invite created but email failed to send: ${invite.emailError}. You can copy the link manually below.`
+        );
+      } else {
+        addNotification(
+          "success",
+          `${getLocaleString(
+            SQ_DISABLE_EMAIL
+              ? "accInviteSentSuccessNoEmail"
+              : "accInviteSentSuccess"
+          )}`
+        );
+      }
 
       setRemainingInvites((r) => r - 1);
 

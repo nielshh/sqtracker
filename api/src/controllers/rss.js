@@ -2,16 +2,19 @@ import bcrypt from "bcrypt";
 import User from "../schema/user";
 import Torrent from "../schema/torrent";
 import { embellishTorrentsWithTrackerScrape } from "./torrent";
+import { escapeXml } from "../utils/xml";
 
 // prettier-ignore
 const getTorrentXml = (torrent, userId) => {
   return `<item>
-      <title>${torrent.name}</title>
-      <description>${torrent.description}</description>
+      <title>${escapeXml(torrent.name)}</title>
+      <description>${escapeXml(torrent.description)}</description>
       <guid>${torrent.infoHash}</guid>
-      <enclosure url="${process.env.SQ_API_URL}/torrent/download/${torrent.infoHash}/${userId}" type="application/x-bittorrent" />
+      <enclosure url="${process.env.SQ_API_URL}/torrent/download/${
+    torrent.infoHash
+  }/${userId}" type="application/x-bittorrent" />
       <torrent>
-        <filename>${torrent.name}</filename>
+        <filename>${escapeXml(torrent.name)}</filename>
         <contentlength>${torrent.size}</contentlength>
         <trackers>
           <group order="ordered">
@@ -77,7 +80,9 @@ export const rssFeed = (tracker) => async (req, res, next) => {
     res.status(200).send(`<?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0">
   <channel>
-    <title>${process.env.SQ_SITE_NAME}: ${query ? "results" : "latest"}</title>
+    <title>${escapeXml(process.env.SQ_SITE_NAME)}: ${
+      query ? "results" : "latest"
+    }</title>
     <link>${process.env.SQ_BASE_URL}</link>
     ${torrentsXml}
   </channel>

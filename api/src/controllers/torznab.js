@@ -1,11 +1,12 @@
 import Torrent from "../schema/torrent";
 import { embellishTorrentsWithTrackerScrape } from "./torrent";
 import User from "../schema/user";
+import { escapeXml } from "../utils/xml";
 
 const getCapsXml = () => {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <caps>
-  <server version="1.0" title="${process.env.SQ_SITE_NAME}" />
+  <server version="1.0" title="${escapeXml(process.env.SQ_SITE_NAME)}" />
   <limits max="100" default="100" />
   <retention days="9999" />
   <registration available="no" open="no" />
@@ -23,8 +24,8 @@ const getCapsXml = () => {
 
 const getTorrentXml = (torrent, userId) => {
   return `<item>
-      <title>${torrent.name}</title>
-      <description><![CDATA[${torrent.description || ''}]]></description>
+      <title>${escapeXml(torrent.name)}</title>
+      <description><![CDATA[${escapeXml(torrent.description || "")}]]></description>
       <pubDate>${new Date(torrent.created).toUTCString()}</pubDate>
       <guid isPermaLink="true">${process.env.SQ_BASE_URL}/torrent/download/${torrent.infoHash}/${userId}</guid>
       <link>${process.env.SQ_BASE_URL}/torrent/download/${torrent.infoHash}/${userId}</link>
@@ -86,9 +87,9 @@ export const handleTorznabRequest = (tracker) => async (req, res, next) => {
       return res.status(200).send(`<?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:torznab="http://torznab.com/schemas/2015/feed">
   <channel>
-    <title>${process.env.SQ_SITE_NAME} - Torznab</title>
+    <title>${escapeXml(process.env.SQ_SITE_NAME)} - Torznab</title>
     <link>${process.env.SQ_BASE_URL}</link>
-    <description>Torznab API for ${process.env.SQ_SITE_NAME}</description>
+    <description>Torznab API for ${escapeXml(process.env.SQ_SITE_NAME)}</description>
     ${torrentsXml}
   </channel>
 </rss>`);
