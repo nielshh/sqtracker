@@ -95,7 +95,12 @@ export const getWiki = async (req, res, next) => {
     ]);
 
     if (!page) {
-      res.status(404).send("Wiki page does not exist");
+      const query = {};
+      if (process.env.SQ_ALLOW_UNREGISTERED_VIEW && !req.userId) {
+        query.public = true;
+      }
+      const allPages = await Wiki.find(query, { slug: 1, title: 1 }).lean();
+      res.json({ page: null, allPages });
       return;
     }
 

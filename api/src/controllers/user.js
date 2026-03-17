@@ -136,6 +136,7 @@ export const register = (mail) => async (req, res, next) => {
 
         const createdUser = await newUser.save();
 
+        let emailError;
         if (!process.env.SQ_DISABLE_EMAIL) {
           const emailVerificationValidUntil = created + 48 * 60 * 60 * 1000;
           const emailVerificationToken = jwt.sign(
@@ -145,11 +146,19 @@ export const register = (mail) => async (req, res, next) => {
             },
             process.env.SQ_JWT_SECRET
           );
-          await sendVerificationEmail(
-            mail,
-            req.body.email,
-            emailVerificationToken
-          );
+          try {
+            await sendVerificationEmail(
+              mail,
+              req.body.email,
+              emailVerificationToken
+            );
+          } catch (err) {
+            console.error("[sq] Error sending verification email:", err);
+            emailError = err.message;
+            console.log(
+              `[sq] Verification link for ${req.body.email}: ${process.env.SQ_BASE_URL}/verify-email?token=${emailVerificationToken}`
+            );
+          }
         }
 
         if (createdUser) {
@@ -182,6 +191,7 @@ export const register = (mail) => async (req, res, next) => {
             id: createdUser._id,
             uid: createdUser.uid,
             username: createdUser.username,
+            emailError,
           });
         } else {
           res.status(500).send("User could not be created");

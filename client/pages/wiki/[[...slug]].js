@@ -160,93 +160,102 @@ const Wiki = ({ page, allPages, token, userRole, slug }) => {
           </Box>
         )}
       </Box>
-      {page ? (
-        <>
-          <Box borderBottom="1px solid" borderColor="border" pb={5} mb={5}>
-            <Text color="grey">
-              {getLocaleString("wikiLastEdited")}{" "}
-              {moment(page.updated ?? page.created).format(
-                `${getLocaleString("indexTime")}`
-              )}{" "}
-              {getLocaleString("reqBy")}{" "}
-              {page.createdBy?.username ? (
-                <Link href={`/user/${page.createdBy.username}`} passHref>
-                  <a>{page.createdBy.username}</a>
-                </Link>
-              ) : (
-                "deleted user"
-              )}
-            </Text>
+      {!editing ? (
+        <Box
+          display="grid"
+          gridTemplateColumns={["1fr", "auto 200px"]}
+          gridGap={5}
+          alignItems="start"
+        >
+          <Box>
+            {page ? (
+              <>
+                <Box
+                  borderBottom="1px solid"
+                  borderColor="border"
+                  pb={5}
+                  mb={5}
+                >
+                  <Text color="grey">
+                    {getLocaleString("wikiLastEdited")}{" "}
+                    {moment(page.updated ?? page.created).format(
+                      `${getLocaleString("indexTime")}`
+                    )}{" "}
+                    {getLocaleString("reqBy")}{" "}
+                    {page.createdBy?.username ? (
+                      <Link href={`/user/${page.createdBy.username}`} passHref>
+                        <a>{page.createdBy.username}</a>
+                      </Link>
+                    ) : (
+                      "deleted user"
+                    )}
+                  </Text>
+                </Box>
+                <MarkdownBody>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      a({ href, ...props }) {
+                        return href.startsWith("http") ? (
+                          <a href={href} target="_blank" {...props} />
+                        ) : (
+                          <Link href={href} passHref>
+                            <a {...props} />
+                          </Link>
+                        );
+                      },
+                    }}
+                  >
+                    {page.body}
+                  </ReactMarkdown>
+                </MarkdownBody>
+              </>
+            ) : (
+              <Text color="grey">
+                {getLocaleString("wikiThereNothingHereYet")}
+              </Text>
+            )}
           </Box>
-          {!editing ? (
-            <Box
-              display="grid"
-              gridTemplateColumns={["1fr", "auto 200px"]}
-              gridGap={5}
-              alignItems="start"
+          <Box
+            bg="sidebar"
+            border="1px solid"
+            borderColor="border"
+            borderRadius={1}
+            p={4}
+            _css={{ order: [-1, "unset"] }}
+          >
+            <Text
+              fontWeight={600}
+              fontSize={1}
+              mb={3}
+              _css={{ textTransform: "uppercase" }}
             >
-              <MarkdownBody>
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    a({ href, ...props }) {
-                      return href.startsWith("http") ? (
-                        <a href={href} target="_blank" {...props} />
-                      ) : (
-                        <Link href={href} passHref>
-                          <a {...props} />
-                        </Link>
-                      );
-                    },
-                  }}
-                >
-                  {page.body}
-                </ReactMarkdown>
-              </MarkdownBody>
-              <Box
-                bg="sidebar"
-                border="1px solid"
-                borderColor="border"
-                borderRadius={1}
-                p={4}
-                _css={{ order: [-1, "unset"] }}
-              >
-                <Text
-                  fontWeight={600}
-                  fontSize={1}
-                  mb={3}
-                  _css={{ textTransform: "uppercase" }}
-                >
-                  {getLocaleString("wikiPages")}
+              {getLocaleString("wikiPages")}
+            </Text>
+            {allPages?.sort(sortSlug).map((p) => (
+              <Link key={`page-${p.slug}`} href={`/wiki${p.slug}`} passHref>
+                <Text as="a" display="block">
+                  {p.title}
                 </Text>
-                {allPages.sort(sortSlug).map((p) => (
-                  <Link key={`page-${p.slug}`} href={`/wiki${p.slug}`} passHref>
-                    <Text as="a" display="block">
-                      {p.title}
-                    </Text>
-                  </Link>
-                ))}
-              </Box>
-            </Box>
-          ) : (
-            <form onSubmit={handleEdit}>
-              <WikiFields values={page} />
-              <Box display="flex" justifyContent="flex-end">
-                <Button
-                  onClick={() => setEditing(false)}
-                  type="button"
-                  variant="secondary"
-                  mr={3}
-                >
-                  {getLocaleString("accCancel")}
-                </Button>
-                <Button>{getLocaleString("wikiSaveChanges")}</Button>
-              </Box>
-            </form>
-          )}
-        </>
+              </Link>
+            ))}
+          </Box>
+        </Box>
       ) : (
-        <Text color="grey">{getLocaleString("wikiThereNothingHereYet")}</Text>
+        <form onSubmit={handleEdit}>
+          <WikiFields values={page} />
+          <Box display="flex" justifyContent="flex-end">
+            <Button
+              onClick={() => setEditing(false)}
+              type="button"
+              variant="secondary"
+              mr={3}
+            >
+              {getLocaleString("accCancel")}
+            </Button>
+            <Button>{getLocaleString("wikiSaveChanges")}</Button>
+          </Box>
+        </form>
       )}
       {showDeleteModal && (
         <Modal close={() => setShowDeleteModal(false)}>
