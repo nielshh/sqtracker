@@ -454,9 +454,16 @@ const AppWrapper = (props) => {
 };
 
 AppWrapper.getInitialProps = async (appContext) => {
-  const { theme } = appContext?.ctx?.req?.cookies || {};
-  const initialCookies = appContext?.ctx?.req?.headers?.cookie || "";
-  const appInitialProps = App.getInitialProps ? await App.getInitialProps(appContext) : {};
+  const cookies = appContext?.ctx?.req?.cookies || {};
+  const { theme, locale } = cookies;
+
+  const initialCookies = {};
+  if (theme) initialCookies.theme = theme;
+  if (locale) initialCookies.locale = locale;
+
+  const appInitialProps = App.getInitialProps
+    ? await App.getInitialProps(appContext)
+    : {};
   return { ...appInitialProps, initialTheme: theme, initialCookies };
 };
 
