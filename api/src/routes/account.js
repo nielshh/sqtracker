@@ -13,6 +13,7 @@ import {
   deleteAccount,
   getUserBookmarks,
   resetPasskey,
+  resendVerificationEmail,
 } from "../controllers/user";
 
 const router = express.Router();
@@ -31,5 +32,6 @@ export default (tracker, mail) => {
   router.post("/delete", deleteAccount);
   router.get("/bookmarks", getUserBookmarks(tracker));
   router.post("/passkey/reset", resetPasskey);
+  router.post("/resend-verification", resendVerificationEmail(mail));
   return router;
 };

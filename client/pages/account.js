@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import getConfig from "next/config";
 import { useRouter } from "next/router";
 import moment from "moment";
@@ -85,7 +85,7 @@ const Account = ({ token, invites = [], user, userRole }) => {
   const [passkey, setPasskey] = useState(user.passkey || "");
 
   const { addNotification } = useContext(NotificationContext);
-  const { setLoading } = useContext(LoadingContext);
+  const { loading, setLoading } = useContext(LoadingContext);
 
   const { getLocaleString } = useContext(LocaleContext);
 
@@ -387,12 +387,65 @@ const Account = ({ token, invites = [], user, userRole }) => {
     setLoading(false);
   };
 
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
+  const handleResendVerification = async () => {
+    setLoading(true);
+    try {
+      const resendRes = await fetch(`${SQ_API_URL}/account/resend-verification`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (resendRes.status !== 200) {
+        const reason = await resendRes.text();
+        throw new Error(reason);
+      }
+
+      addNotification("success", "Verification email sent successfully");
+      setResendCooldown(60);
+    } catch (e) {
+      addNotification(
+        "error",
+        `Could not resend verification email: ${e.message}`
+      );
+      console.error(e);
+    }
+    setLoading(false);
+  };
+
   return (
     <>
       <SEO title={getLocaleString("accMyAccount")} />
       <Text as="h1" mb={5}>
         {getLocaleString("accMyAccount")}
       </Text>
+      {!user.emailVerified && (
+        <Infobox mb={5} variant="warning">
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Text>Your email address is not verified. Please check your inbox.</Text>
+            <Button
+              onClick={handleResendVerification}
+              variant="secondary"
+              disabled={loading || resendCooldown > 0}
+            >
+              {resendCooldown > 0
+                ? `Resend in ${resendCooldown}s`
+                : "Resend Email"}
+            </Button>
+          </Box>
+        </Infobox>
+      )}
       {userRole === "admin" && (
         <Infobox mb={5}>
           <Text>{getLocaleString("accThisIsAdminAcc")}</Text>

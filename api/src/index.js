@@ -64,6 +64,9 @@ validateConfig(config).then(() => {
         user: process.env.SQ_SMTP_USER,
         pass: process.env.SQ_SMTP_PASS,
       },
+      tls: {
+        minVersion: "TLSv1.2",
+      },
     });
   }
 

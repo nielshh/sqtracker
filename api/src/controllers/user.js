@@ -508,7 +508,7 @@ export const fetchUser = (tracker) => async (req, res, next) => {
           username: 1,
           created: 1,
           role: 1,
-          ...(req.userRole === "admin"
+          ...(req.userRole === "admin" || username === req.username
             ? { email: 1, emailVerified: 1, invitedBy: 1 }
             : {}),
           remainingInvites: 1,
@@ -811,6 +811,62 @@ export const verifyUserEmail = async (req, res, next) => {
     }
   } else {
     res.status(400).send("Request must include token");
+  }
+};
+
+export const resendVerificationEmail = (mail) => async (req, res, next) => {
+  try {
+    const user = await User.findOne({ _id: req.userId }).lean();
+
+    if (!user) {
+      res.status(404).send("User does not exist");
+      return;
+    }
+
+    if (user.emailVerified) {
+      res.status(400).send("Email address is already verified");
+      return;
+    }
+
+    const emailVerificationValidUntil = Date.now() + 48 * 60 * 60 * 1000;
+    const emailVerificationToken = jwt.sign(
+      {
+        user: user.email,
+        validUntil: emailVerificationValidUntil,
+      },
+      process.env.SQ_JWT_SECRET
+    );
+
+    const verificationLink = `${process.env.SQ_BASE_URL}/verify-email?token=${emailVerificationToken}`;
+
+    if (!process.env.SQ_DISABLE_EMAIL) {
+      try {
+        await mail.sendMail({
+          from: `"${process.env.SQ_SITE_NAME}" <${process.env.SQ_MAIL_FROM_ADDRESS}>`,
+          to: user.email,
+          subject: "Verify your email address",
+          text: `Thank you for joining ${process.env.SQ_SITE_NAME}. Please follow the link below to verify your email address.
+        
+${verificationLink}`,
+        });
+      } catch (mailError) {
+        console.error("[sq] Error resending verification email:", mailError);
+        console.log(
+          `[sq] Verification link for ${user.email}: ${verificationLink}`
+        );
+        return res
+          .status(500)
+          .send(`Could not send verification email: ${mailError.message}`);
+      }
+    } else {
+      console.log(
+        `[sq] Email disabled. Verification link for ${user.email}: ${verificationLink}`
+      );
+    }
+
+    res.sendStatus(200);
+  } catch (e) {
+    next(e);
   }
 };
 
