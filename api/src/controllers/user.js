@@ -351,10 +351,36 @@ ${process.env.SQ_BASE_URL}/register?token=${createdInvite.token}`,
 
 export const fetchInvites = async (req, res, next) => {
   try {
-    const invites = await Invite.find({ invitingUser: req.userId }, null, {
-      sort: { created: -1 },
-    }).lean();
-    res.json(invites);
+    const invites = await Invite.find({ invitingUser: req.userId }).lean();
+
+    for (const invite of invites) {
+      if (!invite.claimed) {
+        const verifiedUser = await User.findOne({
+          email: invite.email,
+          emailVerified: true,
+        }).lean();
+
+        if (verifiedUser) {
+          await Invite.findOneAndUpdate(
+            { _id: invite._id },
+            { $set: { claimed: true } }
+          );
+          await User.findOneAndUpdate(
+            { _id: req.userId },
+            { $inc: { remainingInvites: -1 } }
+          );
+          invite.claimed = true;
+        }
+      }
+    }
+
+    res.json(
+      invites.sort((a, b) => {
+        if (a.created < b.created) return 1;
+        if (a.created > b.created) return -1;
+        return 0;
+      })
+    );
   } catch (e) {
     next(e);
   }

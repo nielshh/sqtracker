@@ -18,6 +18,20 @@ const createTrackerRoute = (action, onRequest) => async (req, res) => {
   let params;
   try {
     params = parseHttpRequest(req, { action, trustProxy: true });
+
+    // Ensure we use the correct IP address when behind a proxy.
+    // We prioritize the client-reported IPv4/IP if present, otherwise fallback to the connection IP.
+    const query = req.url.split("?")[1] || "";
+    const queryParams = req.query || {};
+    const clientReportedIp = queryParams.ipv4 || queryParams.ip;
+
+    if (clientReportedIp) {
+      params.addr = clientReportedIp;
+    } else if (req.headers["x-forwarded-for"]) {
+      // parseHttpRequest already handles x-forwarded-for with trustProxy, but let's be safe.
+      params.addr = req.headers["x-forwarded-for"].split(",")[0].trim();
+    }
+
     params.httpReq = req;
     params.httpRes = res;
   } catch (err) {
