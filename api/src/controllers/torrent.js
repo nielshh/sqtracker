@@ -9,6 +9,7 @@ import User from "../schema/user";
 import Comment from "../schema/comment";
 import Group from "../schema/group";
 import { createGroup, addToGroup, removeFromGroup } from "./group";
+import { parseTvShow } from "../utils/tv";
 
 const urlReservedCharRegex = /[&$+,/:;=?@#<>\[\]{}|\\\^%]/g;
 
@@ -158,6 +159,31 @@ export const uploadTorrent = async (req, res, next) => {
       await newTorrent.save();
 
       if (groupId) await addToGroup(groupId, infoHash);
+
+      const tvInfo = parseTvShow(req.body.name);
+      if (tvInfo && tvInfo.isSeasonPack) {
+        const escapedShowName = tvInfo.showName
+          .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+          .replaceAll(" ", "[. ]");
+        const episodeRegex = new RegExp(
+          `^${escapedShowName}[. \\-]*S0?${tvInfo.season}E\\d{1,2}`,
+          "i"
+        );
+        const individualEpisodes = await Torrent.find({
+          name: { $regex: episodeRegex },
+          _id: { $ne: newTorrent._id },
+        }).lean();
+
+        for (const ep of individualEpisodes) {
+          if (ep.group) {
+            await removeFromGroup(ep.group, ep.infoHash);
+          }
+          await Torrent.deleteOne({ _id: ep._id });
+          console.log(
+            `[sq] auto-removed individual episode ${ep.name} due to season pack upload`
+          );
+        }
+      }
 
       res.status(200).send(infoHash);
     } catch (e) {
@@ -471,14 +497,15 @@ export const getTorrentsPage = async ({
   sort,
   tracker,
 }) => {
-  const queryNGrams = nGrams(query, false, 2, false).join(" ");
+  const queryNGrams = query ? nGrams(query, false, 2, false) : [];
+  const escapedQuery = query ? query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") : "";
 
   const [sortField, sortDirString] = sort?.split(":") ?? [];
   const sortDir = sortDirString === "asc" ? 1 : -1;
 
   const combinedSort = {};
   if (sortField) combinedSort[sortField] = sortDir;
-  if (query) combinedSort.confidenceScore = { $meta: "textScore" };
+  if (query) combinedSort.relevanceScore = -1;
   if (!combinedSort.created) combinedSort.created = -1;
   combinedSort._id = -1;
 
@@ -487,13 +514,37 @@ export const getTorrentsPage = async ({
       ? [
           {
             $match: {
-              $text: {
-                $search: queryNGrams,
+              $or: [
+                { name: { $regex: escapedQuery, $options: "i" } },
+                { name_fuzzy: { $in: queryNGrams } },
+              ],
+            },
+          },
+          {
+            $addFields: {
+              regexMatch: {
+                $regexMatch: {
+                  input: "$name",
+                  regex: escapedQuery,
+                  options: "i",
+                },
+              },
+              ngramMatchesCount: {
+                $size: {
+                  $ifNull: [
+                    { $setIntersection: ["$name_fuzzy", queryNGrams] },
+                    [],
+                  ],
+                },
               },
             },
           },
           {
-            $addFields: { confidenceScore: { $meta: "textScore" } },
+            $addFields: {
+              relevanceScore: {
+                $add: [{ $cond: ["$regexMatch", 100, 0] }, "$ngramMatchesCount"],
+              },
+            },
           },
         ]
       : []),
@@ -509,7 +560,7 @@ export const getTorrentsPage = async ({
         created: 1,
         freeleech: 1,
         tags: 1,
-        confidenceScore: 1,
+        relevanceScore: 1,
       },
     },
     ...(Array.isArray(ids)
@@ -619,9 +670,10 @@ export const getTorrentsPage = async ({
       ? [
           {
             $match: {
-              $text: {
-                $search: queryNGrams,
-              },
+              $or: [
+                { name: { $regex: escapedQuery, $options: "i" } },
+                { name_fuzzy: { $in: queryNGrams } },
+              ],
             },
           },
         ]
