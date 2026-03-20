@@ -8,6 +8,8 @@
 > - **Enhanced Search Engine**: Replaced traditional n-gram fuzzy searching with a high-relevance hybrid regex and bigram intersection model, significantly improving accuracy for specific queries (e.g. version numbers, special characters).
 > - **Automated Season Pack Management**: Intelligently detects and removes individual TV show episodes upon season pack upload, featuring robust string parsing to handle various torrent naming conventions and separators.
 > - **Auto-Invite Claiming**: Streamlined registration flow that automatically marks invites as claimed for accounts with verified statuses.
+> - **Resilient Reliability**: Implemented a "Partial Success" pattern for user communication (e.g. email resending), allowing the system to proceed with clear fallback warnings even during intermittent SMTP failures.
+> - **Wiki Index Synchronization**: Resolved synchronization bugs where new wiki pages wouldn't appear in the main index, ensuring searchability and discoverability.
 > - **Performance & Logic Fixes**: Optimized torrent browsing with stable secondary sorting and corrected pagination math to ensure distinct, reliable results across large libraries.
 > - **SSR Robustness**: Patched critical React Context crashes during Server-Side Rendering (SSR) with a global `CookiesProvider` and `universal-cookie` integration.
 > - **Security & Performance Overhaul**: Upgraded core stack (Node.js 18, React 18, Next.js 13.5, Mongoose 6) and audited all NPM dependencies to patch high-risk vulnerabilities.
